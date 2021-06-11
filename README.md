@@ -32,6 +32,6 @@ Utilização do javax.validation para validação da entrada de dados informados
 Utilização do Lombok para evitar códigos boiler plate;
 Utilização do github para versionamento;
 
-Este projeto será mudado para modo privado no Github dia 25/05/2020 
+Este projeto será alterado para modo privado no Github dia 25/05/2021.
 
 
