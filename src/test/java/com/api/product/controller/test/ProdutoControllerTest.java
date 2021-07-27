@@ -102,6 +102,41 @@ public class ProdutoControllerTest {
 			.andExpect(status().isNoContent());
 	}
 	
+	@Test
+	public void deveAlterarProduto() throws Exception{
+		
+		Long id = 11L;
+		String json = new ObjectMapper().writeValueAsString(criaNovoProdutoInput());
+
+		Produto produto = criaNovoProduto();
+		
+		BDDMockito.given(service.buscarOuFalhar(id)).willReturn(produto);
+		
+		Produto produtoAlterado =  criaNovoProduto();
+		produtoAlterado.setDescricao("Mesa branca");
+		
+		ProdutoDTO produtoAlteradoDTO =  criaNovoProdutoDTO();
+		produtoAlteradoDTO.setDescricao("Mesa branca");
+		
+		BDDMockito.given(service.salvar(produto)).willReturn(produtoAlterado);
+		
+		BDDMockito.when(produtoDtoAssembler.toModel(Mockito.any(Produto.class))).thenReturn(produtoAlteradoDTO);
+		
+		MockHttpServletRequestBuilder request = 
+				MockMvcRequestBuilders.put(API_PRODUCT.concat("/" + 11L))
+									  .content(json)
+									  .accept(MediaType.APPLICATION_JSON)
+									  .contentType(MediaType.APPLICATION_JSON);
+
+		mvc.perform(request)
+		   .andExpect(status().isOk())
+		   .andExpect(jsonPath("id").isNotEmpty()) 
+		   .andExpect(jsonPath("ativo").value(produtoAlterado.getAtivo()))
+		   .andExpect(jsonPath("descricao").value(produtoAlterado.getDescricao()))
+		   .andExpect(jsonPath("preco").value(produtoAlterado.getPreco()))
+		   .andExpect(jsonPath("quantidade").value(produtoAlterado.getQuantidade()));
+	}
+	
 	private ProdutoInput criaNovoProdutoInput() {
 		
 		return ProdutoInput.builder()
