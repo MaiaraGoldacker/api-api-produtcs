@@ -2,10 +2,13 @@ package com.api.product.dto;
 
 import java.math.BigDecimal;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter 
+@Setter
+@Builder
 public class ProdutoDTO {
 
 	private Long id;

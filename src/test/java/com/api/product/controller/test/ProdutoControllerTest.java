@@ -3,12 +3,13 @@ package com.api.product.controller.test;
 import java.math.BigDecimal;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.api.product.assembler.ProdutoDTOAssembler;
 import com.api.product.assembler.ProdutoDTODisassembler;
 import com.api.product.controller.ProdutoController;
 import com.api.product.dto.ProdutoDTO;
+import com.api.product.dto.input.ProdutoInput;
 import com.api.product.entity.Produto;
 import com.api.product.repository.ProdutoRepository;
 import com.api.product.service.ProdutoService;
@@ -55,22 +56,20 @@ public class ProdutoControllerTest {
 	@Autowired
 	ProdutoController produtoController;
 
-	@org.junit.jupiter.api.Test
+	@Test
 	public void deveCriarProduto() throws Exception {
 		
-		ProdutoDTO dto = criaNovoProduto();
-		
-		Produto produtoSalvo = new Produto();
-		
-		produtoSalvo.setId(101L);
-		produtoSalvo.setDescricao("Mesa 6 cadeiras - madeira maciça");
-		produtoSalvo.setNome("Mesa Kapensberg");
-		produtoSalvo.setPreco(BigDecimal.valueOf(4390.35));
-		produtoSalvo.setQuantidade(20);		
-				
+		ProdutoInput produtoInput = criaNovoProdutoInput();
+		ProdutoDTO produtoDto = criaNovoProdutoDTO();
+		Produto produtoSalvo = criaNovoProduto();				
 		
 		BDDMockito.given(service.salvar(Mockito.any(Produto.class))).willReturn(produtoSalvo); 
-		String json = new ObjectMapper().writeValueAsString(dto);
+		String json = new ObjectMapper().writeValueAsString(produtoInput);
+		
+		BDDMockito.when(produtoDtoDisassembler
+				.toDomainModel(Mockito.any(ProdutoInput.class))).thenReturn(produtoSalvo);
+		
+		BDDMockito.when(produtoDtoAssembler.toModel(Mockito.any(Produto.class))).thenReturn(produtoDto);
 		
 		MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(API_PRODUCT)
 							  .contentType(MediaType.APPLICATION_JSON)
@@ -78,7 +77,12 @@ public class ProdutoControllerTest {
 							  .content(json);
 		
 		mvc.perform(request)
-		.andExpect(MockMvcResultMatchers.status().isCreated()) ;
+		.andExpect(MockMvcResultMatchers.status().isCreated())
+		.andExpect(jsonPath("id").isNotEmpty())
+		.andExpect(jsonPath("ativo").value(produtoDto.getAtivo()))
+		.andExpect(jsonPath("descricao").value(produtoDto.getDescricao()))
+		.andExpect(jsonPath("preco").value(produtoDto.getPreco()))
+		.andExpect(jsonPath("quantidade").value(produtoDto.getQuantidade()));
 	}
 
 	@Test	
@@ -98,15 +102,37 @@ public class ProdutoControllerTest {
 			.andExpect(status().isNoContent());
 	}
 	
-	private ProdutoDTO criaNovoProduto() {
+	private ProdutoInput criaNovoProdutoInput() {
 		
-		ProdutoDTO produtoDTO = new ProdutoDTO();
-		produtoDTO.setDescricao("Mesa 6 cadeiras - madeira maciça");
-		produtoDTO.setNome("Mesa Kapensberg");
-		produtoDTO.setPreco(BigDecimal.valueOf(4390.35));
-		produtoDTO.setQuantidade(20);
-		
-		return produtoDTO;
+		return ProdutoInput.builder()
+				 		 .descricao("Mesa 6 cadeiras - madeira maciça")
+				 		 .nome("Mesa Kapensberg")
+				 		 .ativo(true)
+				 		 .preco(BigDecimal.valueOf(4390.35))
+				 		 .quantidade(20).build();
 	}
 
+	private Produto criaNovoProduto() {
+		
+		return Produto.builder()
+				.id(11L)
+					  .descricao("Mesa 6 cadeiras - madeira")
+					  .nome("Mesa Kapensberg")
+					  .ativo(true)
+					  .preco(BigDecimal.valueOf(4390.35))
+					  .quantidade(20).build();
+	}
+	
+	private ProdutoDTO criaNovoProdutoDTO() {
+		
+		return ProdutoDTO.builder()
+						 .id(11L)
+				 		 .descricao("Mesa 6 cadeiras - madeira maciça")
+				 		 .nome("Mesa Kapensberg")
+				 		 .ativo(true)
+				 		 .preco(BigDecimal.valueOf(4390.35))
+				 		 .quantidade(20).build();
+	}
+
+	
 }
